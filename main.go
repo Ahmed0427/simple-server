@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -94,6 +95,40 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{}
 		response["POSTGRES_PASSWORD"] = os.Getenv("POSTGRES_PASSWORD")
+		json.NewEncoder(w).Encode(response)
+	})
+
+	mux.HandleFunc("GET /visit", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		volumePath := "/app/data/visits.txt"
+
+		f, err := os.OpenFile(volumePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			http.Error(w, "Volume write error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		timestamp := time.Now().Format(time.RFC3339)
+		if _, err := f.WriteString(timestamp + "\n"); err != nil {
+			f.Close()
+			http.Error(w, "Failed to write data", http.StatusInternalServerError)
+			return
+		}
+		f.Close()
+
+		data, err := os.ReadFile(volumePath)
+		if err != nil {
+			http.Error(w, "Volume read error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+		response := map[string]interface{}{
+			"message":      "Visit logged successfully!",
+			"total_visits": len(lines),
+			"history":      lines,
+		}
 		json.NewEncoder(w).Encode(response)
 	})
 

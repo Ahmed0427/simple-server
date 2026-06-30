@@ -13,7 +13,12 @@ services:
     configs:
       - source: main_config
         target: /config.json
+    volumes:
+      - storage:/app/data
 
 configs:
   main_config:
     file: ./config.json
+
+volumes:
+  storage:
