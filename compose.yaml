@@ -10,5 +10,10 @@ services:
       - dev.env
     environment:
       - VERSION=1.0.0
-    volumes:
-      - ./config.json:/config.json
+    configs:
+      - source: main_config
+        target: /config.json
+
+configs:
+  main_config:
+    file: ./config.json
