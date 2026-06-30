@@ -1,0 +1,14 @@
+services:
+  simple-server:
+    image: ahmed0427/simple-server:1.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    env_file:
+      - dev.env
+    environment:
+      - VERSION=1.0.0
+    volumes:
+      - ./config.json:/config.json
