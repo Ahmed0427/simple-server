@@ -17,10 +17,14 @@ type Item struct {
 }
 
 func main() {
-	PORT := "8080"
+	PORT := os.Getenv("PORT")
+	if PORT == "" {
+		fmt.Fprintln(os.Stderr, "PORT env not set")
+		os.Exit(1)
+	}
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		fmt.Fprintln(os.Stderr, "DATABASE_URL not set")
+		fmt.Fprintln(os.Stderr, "DATABASE_URL env not set")
 		os.Exit(1)
 	}
 

@@ -1,37 +1,55 @@
 services:
+  nginx:
+    image: nginx:alpine
+    restart: always
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - 8080:80
+    depends_on:
+      simple-server:
+        condition: service_healthy
+    networks:
+      - public-network
+
   simple-server:
     image: ahmed0427/simple-server:latest
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - 8080:8080
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/simpletable?sslmode=disable
-      - VERSION=latest
+      - PORT=8080
     depends_on:
       postgres:
         condition: service_healthy
     networks:
+      - public-network
       - private-network
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget --no-cache --spider http://localhost:8080/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   postgres:
     image: postgres:latest
-    ports:
-      - 5432:5432
+    restart: always
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=simpletable
     volumes:
       - postgres-data:/var/lib/postgresql
+    networks:
+      - private-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d simpletable"]
       interval: 3s
       timeout: 3s
       retries: 5
-    networks:
-      - private-network
 
 volumes:
   postgres-data:
@@ -39,4 +57,6 @@ volumes:
 
 networks:
   private-network:
+    driver: bridge
+  public-network:
     driver: bridge
